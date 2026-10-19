@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './pages/LandingPage';
@@ -72,7 +72,7 @@ const Footer: React.FC = () => {
 export function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <HashRouter>
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
           <Navbar />
           <main style={{ flex: 1 }}>
@@ -155,7 +155,7 @@ export function App() {
           <HackathonDemoBar />
           <Footer />
         </div>
-      </BrowserRouter>
+      </HashRouter>
     </AuthProvider>
   );
 }
