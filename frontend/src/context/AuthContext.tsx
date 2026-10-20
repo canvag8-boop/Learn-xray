@@ -1,6 +1,17 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
 import { User } from '../types';
-import { api } from '../services/api';
+
+// Static guest user — no login required, everyone can use the app
+const GUEST_USER: User = {
+  id: 1,
+  username: 'guest',
+  email: 'guest@learnxray.app',
+  display_name: 'Guest Student',
+  grade: 'JEE Aspirant',
+  learning_goal: 'Master JEE Differentiation',
+  is_demo: true,
+  created_at: new Date().toISOString(),
+};
 
 interface AuthContextType {
   user: User | null;
@@ -15,46 +26,18 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  const refreshUser = async () => {
-    try {
-      const currentUser = await api.getMe();
-      setUser(currentUser);
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    refreshUser();
-  }, []);
-
-  const login = async (username: string, password: string) => {
-    const res = await api.login(username, password);
-    setUser(res.user);
-  };
-
-  const register = async (data: { email: string; username: string; display_name: string; password: string; grade?: string }) => {
-    const res = await api.register(data);
-    setUser(res.user);
-  };
-
-  const demoLogin = async () => {
-    const res = await api.demoLogin();
-    setUser(res.user);
-  };
-
-  const logout = async () => {
-    await api.logout();
-    setUser(null);
-  };
+  const noop = async () => {};
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, demoLogin, logout, refreshUser }}>
+    <AuthContext.Provider value={{
+      user: GUEST_USER,
+      loading: false,
+      login: noop,
+      register: noop,
+      demoLogin: noop,
+      logout: noop,
+      refreshUser: noop,
+    }}>
       {children}
     </AuthContext.Provider>
   );
