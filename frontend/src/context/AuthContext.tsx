@@ -1,17 +1,6 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
-
-// Static guest user — no login required, everyone can use the app
-const GUEST_USER: User = {
-  id: 1,
-  username: 'guest',
-  email: 'guest@learnxray.app',
-  display_name: 'Guest Student',
-  grade: 'JEE Aspirant',
-  learning_goal: 'Master JEE Differentiation',
-  is_demo: true,
-  created_at: new Date().toISOString(),
-};
+import { api } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
@@ -26,17 +15,65 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Auto-login as demo on every app load — no password needed
+  const autoLoginDemo = async () => {
+    try {
+      // If we already have a valid token, use it
+      const currentUser = await api.getMe();
+      setUser(currentUser);
+    } catch {
+      // No valid token — silently log in as demo user
+      try {
+        const res = await api.demoLogin();
+        setUser(res.user);
+      } catch {
+        // Backend unavailable — use a placeholder so UI still renders
+        setUser({
+          id: 1,
+          username: 'demo_student',
+          email: 'demo@learnxray.app',
+          display_name: 'Demo Student',
+          grade: 'JEE Aspirant',
+          learning_goal: 'Master JEE Differentiation',
+          is_demo: true,
+          created_at: new Date().toISOString(),
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    autoLoginDemo();
+  }, []);
+
+  const refreshUser = async () => {
+    try {
+      const currentUser = await api.getMe();
+      setUser(currentUser);
+    } catch {
+      await autoLoginDemo();
+    }
+  };
+
   const noop = async () => {};
 
   return (
     <AuthContext.Provider value={{
-      user: GUEST_USER,
-      loading: false,
+      user,
+      loading,
       login: noop,
       register: noop,
-      demoLogin: noop,
+      demoLogin: async () => {
+        const res = await api.demoLogin();
+        setUser(res.user);
+      },
       logout: noop,
-      refreshUser: noop,
+      refreshUser,
     }}>
       {children}
     </AuthContext.Provider>
