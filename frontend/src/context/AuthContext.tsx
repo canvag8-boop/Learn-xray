@@ -18,47 +18,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Auto-login as demo on every app load — no password needed
-  const autoLoginDemo = async () => {
+  // On load: auto-login as demo (works with real backend or mock data)
+  const refreshUser = async () => {
     try {
-      // If we already have a valid token, use it
+      // api.getMe() returns mock DEMO_USER when backend is unavailable
       const currentUser = await api.getMe();
       setUser(currentUser);
     } catch {
-      // No valid token — silently log in as demo user
-      try {
-        const res = await api.demoLogin();
-        setUser(res.user);
-      } catch {
-        // Backend unavailable — use a placeholder so UI still renders
-        setUser({
-          id: 1,
-          username: 'demo_student',
-          email: 'demo@learnxray.app',
-          display_name: 'Demo Student',
-          grade: 'JEE Aspirant',
-          learning_goal: 'Master JEE Differentiation',
-          is_demo: true,
-          created_at: new Date().toISOString(),
-        });
-      }
+      const res = await api.demoLogin();
+      setUser(res.user);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    autoLoginDemo();
-  }, []);
-
-  const refreshUser = async () => {
-    try {
-      const currentUser = await api.getMe();
-      setUser(currentUser);
-    } catch {
-      await autoLoginDemo();
-    }
-  };
+  useEffect(() => { refreshUser(); }, []);
 
   const noop = async () => {};
 
@@ -82,8 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
+
